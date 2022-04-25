@@ -1,0 +1,12 @@
+const String STUDENT_ADJUSTMENT = "Đánh giá học sinh";
+const String MATH_SCORE = "Điểm Toán";
+const String MATH_HINT = "Nhập điểm Toán";
+const String LITETURE_SCORE = "Điểm Văn";
+const String LITETURE_HINT = "Nhập điểm Văn";
+const String ENGLISH_SCORE = "Điểm Anh";
+const String ENGLISH_HINT = "Nhập điểm Anh";
+const String ADJUSTMENT = "Đánh giá";
+const String AVERAGE_SCORE = "Điểm trung bình";
+const String GRADE = "Học lực";
+const String CHANGE_PAGE = "Chuyển trang";
+const String INFORMATION = "Thông tin";
