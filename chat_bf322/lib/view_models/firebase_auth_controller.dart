@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../data_sources/firebase_services.dart';
 import '../models/app_user.dart';
+import '../resources/utils/utils.dart';
 
 enum AuthStatus {none, authenticate, unauthenticate}
 
@@ -90,6 +91,25 @@ class FirebaseAuthController with ChangeNotifier  {
     _loading();
     await _firebaseService.signOut();
     _unLoading();
+  }
+
+  Future<bool> updateUser({required String displayName, File? avatar}) async {
+    _loading();
+    try {
+      await _firebaseService.updateUser(
+          userId: appUser!.uid!,
+          displayName:
+          displayName.isEmpty ? appUser!.displayName! : displayName,
+          avatar: avatar);
+      appUser = await _firebaseService.getUser(appUser!.uid!);
+      Utils.showToast("Updated Successfully");
+      _unLoading();
+      return true;
+    } catch (e){
+      _unLoading();
+      Utils.showToast(e.toString());
+      return false;
+    }
   }
 
   @override

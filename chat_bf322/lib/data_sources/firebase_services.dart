@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/app_user.dart';
+import '../models/message.dart';
+import '../models/room_chat.dart';
 import '../resources/utils/utils.dart';
 import 'firebase_repository.dart';
 
@@ -122,5 +125,107 @@ class FirebaseServices {
   Stream<User?> userChangeStream() async* {
     yield* firebaseRepository.firebaseAuth.userChanges();
   }
+
+  Future<List<AppUser>> searchUser(String uid) async {
+    List<AppUser> listUser = [];
+    final snapshot = await firebaseRepository.firestore.collection("users").get();
+    for (var doc in snapshot.docs) {
+      if (doc.id != uid) {
+        print(doc.data());
+        listUser.add(AppUser.fromJson(doc.data()));
+      }
+    }
+    return listUser;
+  }
+
+  Future sendMessage(
+      {required RoomChat roomChat, required Message message}) async {
+    await firebaseRepository.firestore
+        .collection("chats")
+        .doc(roomChat.id)
+        .collection("messages")
+        .doc(message.id)
+        .set(message.toJson());
+    await firebaseRepository.firestore
+        .collection("chats")
+        .doc(roomChat.id)
+        .set(roomChat.toJson());
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getStreamMessage(
+      String idRoomChat) async* {
+    yield* firebaseRepository.firestore
+        .collection("chats")
+        .doc(idRoomChat)
+        .collection("messages")
+        .orderBy("time_stamp", descending: true)
+        .snapshots();
+  }
+
+  Future<String?> getIdRoomChat(String senderId, String recieverId) async {
+    final snapshot = await firebaseRepository.firestore.collection("chats").get();
+    for (var doc in snapshot.docs) {
+      List<dynamic> membersId = doc.get("members_id");
+      if (membersId.any((element) => element == senderId) &&
+          membersId.any((element) => element == recieverId)) {
+        return doc.get("id");
+      }
+    }
+  }
+
+  Future<String?> uploadFileMessage(String userId, File file) async {
+    String fileName = Uuid().v4();
+    try {
+      final uploaTask =
+      await firebaseRepository.firebaseStorage.ref('message/$userId/$fileName').putFile(file);
+      return uploaTask.ref.getDownloadURL();
+    } on FirebaseException catch (e) {
+      Utils.showToast(e.message ?? "");
+    }
+  }
+
+  Future updateMessageMedias(
+      List<String> medias, String roomChatId, String messageId) async {
+    await firebaseRepository.firestore
+        .collection("chats")
+        .doc(roomChatId)
+        .collection("messages")
+        .doc(messageId)
+        .update({"medias": medias});
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getStreamRoomChat(
+      String userId) async* {
+    yield* firebaseRepository.firestore
+        .collection("chats")
+        .where("members_id", arrayContains: userId)
+        .snapshots();
+  }
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getStreamUser(
+      String uid) async* {
+    yield* firebaseRepository.firestore.collection("users").doc(uid).snapshots();
+  }
+
+  Future updateUser(
+      {required String userId,
+        required String displayName,
+        File? avatar}) async {
+    if (avatar != null) {
+      String? photoUrl = await uploadFile(userId, avatar);
+      await firebaseRepository.firestore
+          .collection("users")
+          .doc(userId)
+          .update({"display_name": displayName, "photo_url": photoUrl});
+    } else {
+      await firebaseRepository.firestore
+          .collection("users")
+          .doc(userId)
+          .update({"display_name": displayName});
+    }
+  }
+
+
+
 
 }

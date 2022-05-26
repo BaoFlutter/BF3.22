@@ -1,5 +1,7 @@
+import 'package:chat_bf322/view_models/firebase_auth_controller.dart';
 import 'package:chat_bf322/views/main_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,14 +12,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: "Baloo2",
-        scaffoldBackgroundColor: Colors.white,
-        backgroundColor: Colors.white
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context)=> FirebaseAuthController()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: MainScreen(),
       ),
-      home: MainScreen(),
     );
   }
 }
